@@ -26,7 +26,7 @@ defmodule ExAdvent.Day01 do
   To make my life easier, clean that up by converting the
   file input to a list of signed ints.
   """
-  def clean_sequence(input_path) do
+  def clean_sequence(input_path \\ @input_path) do
     input_path
     |> File.stream!()
     |> Stream.map(fn f ->
@@ -59,9 +59,8 @@ defmodule ExAdvent.Day01 do
 
   Starting with a frequency of zero, what is the resulting frequency after all of the changes in frequency have been applied?
   """
-  def calculate_frequency(input_path \\ @input_path) do
-    clean_sequence(input_path)
-    |> Enum.sum()
+  def calculate_frequency(input_list) do
+    Enum.sum(input_list)
   end
 
   @doc """
@@ -90,30 +89,22 @@ defmodule ExAdvent.Day01 do
 
   What is the first frequency your device reaches twice?
   """
-  def first_repeated(input_path \\ @input_path) do
-    # Elixir does have hash tables: that's what ETS is.
-    :ets.new(:freqs, [:set, :private, :named_table])
-    # I'm going to take the sequence of frequency changes...
-    sequence = clean_sequence(input_path)
-    # ...and keep cycling over the values, summing them up.
-    # each iteration, check the current accumulator against
-    # the hash table - I'm looking for the first match.
-    loop(sequence, 0, :freqs, sequence)
-  end
+  def first_repeated(input_list) do
+    :ets.new(:hash, [:named_table, :set, :private])
 
-  def loop([], acc, ets_id, seq) do
-    loop(seq, acc, ets_id, seq)
-  end
+    input_list
+    |> Stream.cycle()
+    |> Enum.reduce_while({0, :ets.insert(:hash, {0, nil})}, fn f, {acc, _} ->
+      acc = acc + f
 
-  def loop([x | xs], acc, ets_id, seq) do
-    case :ets.lookup(ets_id, acc) do
-      [] ->
-        :ets.insert(ets_id, {acc, nil})
-        loop(xs, acc + x, ets_id, seq)
+      case :ets.lookup(:hash, acc) do
+        [] ->
+          {:cont, {acc, :ets.insert(:hash, {acc, nil})}}
 
-      [_] ->
-        :ets.delete(ets_id)
-        acc
-    end
+        [_] ->
+          :ets.delete(:hash)
+          {:halt, acc}
+      end
+    end)
   end
 end

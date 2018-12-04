@@ -1,0 +1,4 @@
+duration:1.0;mem stats:false;sys mem stats:false
+module;test;tags;iterations;elapsed
+Day01Bench	ets		20	1723346
+Day01Bench	set		20	1556453
