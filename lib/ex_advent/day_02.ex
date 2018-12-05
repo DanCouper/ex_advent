@@ -42,12 +42,15 @@ defmodule ExAdvent.Day02 do
       input_list
       |> Stream.map(&letter_count(&1, %{}))
       |> Stream.map(fn counts ->
+        # FIXME I hate this
         {Enum.count(counts, fn c -> c == 2 end), Enum.count(counts, fn c -> c == 3 end)}
       end)
       |> Enum.reduce({0, 0}, fn {p, t}, {pairs, triplets} ->
         {pairs + p, triplets + t}
       end)
 
+    # FIXME This was not necessary for my input, but I would
+    # like to integrate this a bit better with above.
     {p, t} =
       case {p, t} do
         {0, t} when t > 0 -> {1, t}
@@ -61,6 +64,9 @@ defmodule ExAdvent.Day02 do
   def letter_count(<<>>, map) do
     map
     |> Map.values()
+    # FIXME can I do most of the work here to get a
+    # useful output - {pair, triplet} as {0 or 1, 0 or 1}
+    # would be ideal
     |> Enum.uniq()
   end
 
@@ -90,4 +96,24 @@ defmodule ExAdvent.Day02 do
 
   What letters are common between the two correct box IDs? (In the example above, this is found by removing the differing character from either ID, producing fgij.)
   """
+  def common_letters(input_list) do
+    input_list
+    |> create_pairings()
+    |> Enum.reduce_while("", fn {a, b}, _ ->
+      case String.myers_difference(a, b) do
+        [eq: common_a, del: <<_diff_a::8>>, ins: <<_diff_b::8>>, eq: common_b] ->
+          {:halt, common_a <> common_b}
+
+        _ ->
+          {:cont, ""}
+      end
+    end)
+  end
+
+  def create_pairings(input_list) do
+    for id_a <- input_list,
+        id_b <- input_list,
+        id_a != id_b,
+        do: {id_a, id_b}
+  end
 end
